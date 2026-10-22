@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
 import api from "../api";
@@ -15,6 +15,8 @@ function BlogForm() {
   const [image, setImage] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!user) navigate("/login");
@@ -40,6 +42,10 @@ function BlogForm() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (submittingRef.current) return;
+
+    submittingRef.current = true;
+    setIsSubmitting(true);
     setError("");
 
     const body = { title, description, category, author: user.name, image };
@@ -53,6 +59,8 @@ function BlogForm() {
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   }
 
@@ -120,9 +128,12 @@ function BlogForm() {
           required
         />
 
-        <button className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-700 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-800">
+        <button
+          disabled={isSubmitting}
+          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-700 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
+        >
           <Save size={18} />
-          {id ? "Update Blog" : "Create Blog"}
+          {isSubmitting ? "Saving..." : id ? "Update Blog" : "Create Blog"}
         </button>
       </form>
     </div>
